@@ -24,40 +24,38 @@ React Server Components use a new file extension: `.server.js`. This indicates t
 
 To use a server component from a client component, you need to use a special `<React.lazy>` function that takes a dynamic import as an argument. This tells React to fetch the server component from the server and render it on the client. For example:
 
-```
+```js
 // App.client.js
-import React from 'react';
+import React from "react";
 
-const Profile = React.lazy(() => import('./Profile.server.js'));
+const Profile = React.lazy(() => import("./Profile.server.js"));
 
 function App() {
-  return (
-    <div>
-      <h1>Hello, world!</h1>
-      <React.Suspense fallback={<p>Loading...</p>}>
-        <Profile />
-      </React.Suspense>
-    </div>
-  );
+	return (
+		<div>
+			<h1>Hello, world!</h1>
+			<React.Suspense fallback={<p>Loading...</p>}>
+				<Profile />
+			</React.Suspense>
+		</div>
+	);
 }
-
 ```
 
-```
+```js
 // Profile.server.js
-import React from 'react';
-import db from './db.server.js';
+import React from "react";
+import db from "./db.server.js";
 
 function Profile() {
-  const user = db.getUser(); // Fetch user data from the database
-  return (
-    <div>
-      <h2>{user.name}</h2>
-      <p>{user.bio}</p>
-    </div>
-  );
+	const user = db.getUser(); // Fetch user data from the database
+	return (
+		<div>
+			<h2>{user.name}</h2>
+			<p>{user.bio}</p>
+		</div>
+	);
 }
-
 ```
 
 In this example, the `App` component is a client component that renders a `Profile` component, which is a server component. The `Profile` component fetches the user data from the database and returns some JSX. React will render the `Profile` component on the server and stream the result to the client, where it will be hydrated by the `App` component.
@@ -86,39 +84,37 @@ To use React Server Components with Next.js, you need to follow these steps:
 
 Here is an example of a Next.js project that uses React Server Components:
 
-```
+```js
 // pages/index.client.js
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 
-const Greeting = React.lazy(() => import('../components/Greeting.server.js'));
+const Greeting = React.lazy(() => import("../components/Greeting.server.js"));
 
 export default function Home() {
-  return (
-    <div>
-      <h1>Next.js + React Server Components</h1>
-      <React.Suspense fallback={<p>Loading...</p>}>
-        <Greeting />
-      </React.Suspense>
-      <Link href="/about">
-        <a>About</a>
-      </Link>
-    </div>
-  );
+	return (
+		<div>
+			<h1>Next.js + React Server Components</h1>
+			<React.Suspense fallback={<p>Loading...</p>}>
+				<Greeting />
+			</React.Suspense>
+			<Link href="/about">
+				<a>About</a>
+			</Link>
+		</div>
+	);
 }
-
 ```
 
-```
+```js
 // components/Greeting.server.js
-import React from 'react';
+import React from "react";
 
 export default function Greeting() {
-  const hour = new Date().getHours();
-  const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-  return <p>Good {timeOfDay}!</p>;
+	const hour = new Date().getHours();
+	const timeOfDay = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+	return <p>Good {timeOfDay}!</p>;
 }
-
 ```
 
 This example shows a simple home page that renders a greeting component on the server, based on the current time of day. The greeting component is imported by the home page using `React.lazy`, and wrapped in a `React.Suspense` component to handle the loading state. The home page also includes a link to another page, which is handled by Next.js routing.
