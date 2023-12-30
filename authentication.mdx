@@ -1,0 +1,132 @@
+---
+title: "Authentication in Next.js with NextAuth.js"
+date: "2023-12-30"
+tags: ["nextjs", "nextauthjs", "auth", "authentication"]
+---
+
+# How to Add Authentication to Your Next.js App
+
+Next.js is a popular framework for building fast and scalable web applications using React. One of the common features that many web apps need is authentication, which allows users to sign up, log in, and access protected pages and resources.
+
+In this blog post, I will show you how to add authentication to your Next.js app using NextAuth.js, a library that provides an easy and flexible way to integrate different authentication providers and methods. NextAuth.js supports various providers such as Google, Facebook, Twitter, GitHub, and more, as well as email and password, magic links, and one-time passwords.
+
+## Setting Up NextAuth.js
+
+To get started, you need to install NextAuth.js and its dependencies:
+
+```node
+npm install next-auth react react-dom
+
+```
+
+Next, you need to create a file called `[...nextauth].js` in the `pages/api/auth` folder. This file will handle the authentication requests and responses. You can use the following code as a template:
+
+```js
+import NextAuth from "next-auth";
+import Providers from "next-auth/providers";
+
+export default NextAuth({
+	// Configure one or more authentication providers
+	providers: [
+		Providers.Google({
+			clientId: process.env.GOOGLE_CLIENT_ID,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+		}),
+		// ...add more providers here
+	],
+
+	// A database is optional, but required to persist accounts in a database
+	database: process.env.DATABASE_URL,
+});
+```
+
+As you can see, you need to specify the authentication providers that you want to use, and optionally a database connection string to store the user accounts. You also need to provide the client ID and client secret for each provider, which you can obtain from their respective developer portals. You should store these values in environment variables for security reasons.
+
+## Adding Sign In and Sign Out Buttons
+
+Next, you need to add some buttons to allow users to sign in and sign out of your app. You can use the `useSession` hook from NextAuth.js to access the current user session and display the appropriate button. For example, you can create a component called `AuthButton.js` with the following code:
+
+```js
+import { useSession, signIn, signOut } from "next-auth/client";
+
+export default function AuthButton() {
+	const [session, loading] = useSession();
+
+	if (loading) {
+		return <div>Loading...</div>;
+	}
+
+	if (session) {
+		return (
+			<button onClick={() => signOut()}>Sign out {session.user.name}</button>
+		);
+	} else {
+		return <button onClick={() => signIn()}>Sign in</button>;
+	}
+}
+```
+
+Then, you can use this component in any page of your app, such as the index page:
+
+```js
+import AuthButton from "../components/AuthButton";
+
+export default function Home() {
+	return (
+		<div>
+			<h1>Welcome to Next.js!</h1>
+			<AuthButton />
+		</div>
+	);
+}
+```
+
+## Protecting Pages and Resources
+
+Finally, you may want to protect some pages and resources from unauthorized access. You can use the `getSession` function from NextAuth.js to check if the user is logged in and redirect them to the sign in page if not. For example, you can create a page called `profile.js` with the following code:
+
+```js
+import { getSession } from "next-auth/client";
+
+export default function Profile({ user }) {
+	return (
+		<div>
+			<h1>Profile</h1>
+			<p>Name: {user.name}</p>
+			<p>Email: {user.email}</p>
+		</div>
+	);
+}
+
+export async function getServerSideProps(context) {
+	// Get the user session
+	const session = await getSession(context);
+
+	if (!session) {
+		// If no user, redirect to sign in
+		return {
+			redirect: {
+				destination: "/api/auth/signin",
+				permanent: false,
+			},
+		};
+	}
+
+	// If there is a user, return the current user
+	return {
+		props: { user: session.user },
+	};
+}
+```
+
+This page will display the user's name and email if they are logged in, or redirect them to the sign in page if they are not.
+
+Here is a video demonstrating NextAuth.js and how to implement its features.
+
+<Video id="w2h54xz6Ndw" />
+
+## Conclusion
+
+In this blog post, I showed you how to add authentication to your Next.js app using NextAuth.js. NextAuth.js is a powerful and easy-to-use library that supports various authentication providers and methods. You can use it to create secure and user-friendly web apps with Next.js.
+
+I hope you found this blog post helpful and informative. If you have any questions or feedback, please feel free to leave a comment below. Thank you for reading! 😊
