@@ -1,0 +1,205 @@
+---
+title: "Next.js Server Actions"
+date: "2023-12-30"
+tags: ["nextjs", "serveractions", "react", "servercomponents"]
+---
+
+Next.js is a popular framework for building React applications that support features like server-side rendering, static site generation, and dynamic routing. One of the new features introduced in Next.js 13.4 is Server Actions, which are asynchronous functions that run on the server and can handle form submissions, data mutations, and other custom logic.
+
+Server Actions are based on React Server Components, which are components that can render on the server and stream the HTML to the client. Server Actions allow you to write code that can access the server environment, such as databases, files, or APIs, without exposing them to the client. Server Actions can also integrate with the Next.js caching and revalidation system, so that when an action is invoked, Next.js can return both the updated UI and the new data in a single server roundtrip.
+
+In this article, we will explore how to use Server Actions in Next.js applications, and see some examples of how they can simplify data fetching and form handling. We will also compare Server Actions with Next.js API routes, which are another way to create server endpoints in Next.js.
+
+## How to use Server Actions in Next.js
+
+To use Server Actions in Next.js, you need to enable the experimental app router feature in your `next.config.js` file:
+
+```js
+module.exports = {
+	experimental: {
+		appRouter: true,
+	},
+};
+```
+
+Server Actions can be defined in two ways: as inline functions or as module exports. To define an inline Server Action, you need to add the `use server` directive at the top of an async function. For example, this is a Server Action that creates a new user in a database:
+
+```js
+// Server Component
+export default function SignUp() {
+	// Server Action
+	async function createUser(data) {
+		"use server";
+		// Connect to the database
+		const db = await connectToDatabase();
+		// Insert the user data
+		await db.collection("users").insertOne(data);
+		// Return a success message
+		return "User created successfully";
+	}
+
+	return (
+		<form action={createUser}>
+			<input type="text" name="name" placeholder="Name" />
+			<input type="email" name="email" placeholder="Email" />
+			<input type="password" name="password" placeholder="Password" />
+			<button type="submit">Sign Up</button>
+		</form>
+	);
+}
+```
+
+To define a Server Action as a module export, you need to add the `use server` directive at the top of a file, and then export one or more async functions from that file. For example, this is a file that exports two Server Actions: one to fetch a list of posts, and another to create a new post:
+
+```js
+// app/actions.js
+"use server";
+
+import { getPosts, createPost } from "./lib/posts";
+
+export async function getPostList() {
+	// Fetch the posts from the database
+	const posts = await getPosts();
+	// Return the posts as an array
+	return posts;
+}
+
+export async function addPost(data) {
+	// Create a new post in the database
+	await createPost(data);
+	// Return a success message
+	return "Post added successfully";
+}
+```
+
+To use these Server Actions in a Server Component, you can import them and pass them as props to other components. For example, this is a Server Component that renders a list of posts and a form to add a new post:
+
+```js
+// Server Component
+import { getPostList, addPost } from "./app/actions";
+import PostList from "./components/PostList";
+import PostForm from "./components/PostForm";
+
+export default function Blog() {
+	// Fetch the posts using a Server Action
+	const posts = getPostList();
+	// Render the posts and the form
+	return (
+		<div>
+			<h1>Blog</h1>
+			<PostList posts={posts} />
+			<PostForm action={addPost} />
+		</div>
+	);
+}
+```
+
+To use Server Actions in a Client Component, you can only import actions that use the module-level `use server` directive. You can then pass them as props to other components, or invoke them from event handlers, `useEffect`, or third-party libraries. For example, this is a Client Component that renders a button to delete a post, and uses a Server Action to perform the deletion:
+
+```js
+// Client Component
+"use client";
+
+import { deletePost } from "./app/actions";
+
+export default function DeleteButton({ id }) {
+	// Delete the post using a Server Action
+	async function handleDelete() {
+		await deletePost(id);
+		// Show a confirmation message
+		alert("Post deleted successfully");
+	}
+
+	return <button onClick={handleDelete}>Delete</button>;
+}
+```
+
+## How Server Actions work
+
+Server Actions are invoked using the `action` attribute in a `<form>` element, or by calling them directly from JavaScript code. When a Server Action is invoked, Next.js will send a POST request to the server with the action name and the data as parameters. The server will then execute the action function and return the result as JSON.
+
+Server Actions can also trigger a UI update, by using the `useTransition` hook from React. This hook allows you to specify a fallback UI that will be shown while the action is in progress, and a final UI that will be shown after the action is completed. For example, this is a Server Component that uses `useTransition` to show a loading spinner and a success message when a form is submitted:
+
+```js
+// Server Component
+import { useTransition } from "react";
+
+export default function Contact() {
+	// Server Action
+	async function sendEmail(data) {
+		"use server";
+		// Send the email using a third-party service
+		await sendgrid.send(data);
+		// Return a success message
+		return "Email sent successfully";
+	}
+
+	// Use transition to handle the action state
+	const [startTransition, isPending] = useTransition();
+	const [result, setResult] = useState(null);
+
+	// Submit the form using a Server Action
+	async function handleSubmit(e) {
+		e.preventDefault();
+		// Start the transition
+		startTransition(() => {
+			// Invoke the Server Action
+			sendEmail(e.target).then((res) => {
+				// Set the result
+				setResult(res);
+			});
+		});
+	}
+
+	// Render the form and the result
+	return (
+		<div>
+			<h1>Contact</h1>
+			<form onSubmit={handleSubmit}>
+				<input type="text" name="name" placeholder="Name" />
+				<input type="email" name="email" placeholder="Email" />
+				<textarea name="message" placeholder="Message" />
+				<button type="submit">Send</button>
+			</form>
+			{isPending && <p>Loading...</p>}
+			{result && <p>{result}</p>}
+		</div>
+	);
+}
+```
+
+Server Actions can also integrate with the Next.js caching and revalidation system, which allows you to cache data on the server and revalidate it when it changes. To use this feature, you need to wrap your Server Actions with the `withCache` function from `next/server`. This function takes a Server Action and an options object as arguments, and returns a new Server Action that can be cached and revalidated. For example, this is a Server Action that fetches a list of posts, and uses `withCache` to cache the result for 10 seconds:
+
+```js
+// app/actions.js
+"use server";
+
+import { getPosts } from "./lib/posts";
+import { withCache } from "next/server";
+
+export const getPostList = withCache(
+	async function getPostList() {
+		// Fetch the posts from the database
+		const posts = await getPosts();
+		// Return the posts as an array
+		return posts;
+	},
+	{
+		// Cache the result for 10 seconds
+		maxAge: 10,
+	}
+);
+```
+
+When this Server Action is invoked, Next.js will check if the result is already cached on the server. If it is, it will return the cached result without executing the action function. If it is not, it will execute the action function and cache the result for the specified duration. Next.js will also revalidate the result when it expires, by executing the action function again and updating the cache.
+
+## How Server Actions compare with Next.js API routes
+
+Next.js API routes are another way to create server endpoints in Next.js, by creating files under the `pages/api` directory. API routes can handle any HTTP method, such as GET, POST, PUT, or DELETE, and can access the request and response objects directly. API routes can also use middleware, such as `next-connect`, to add features like error handling, authentication, or validation.
+
+Server Actions are similar to API routes in some ways, but they also have some differences and advantages. Here are some of the main differences between Server Actions and API routes:
+
+- Server Actions can only use the POST method, and only this method can invoke them. API routes can use any HTTP method, and can be invoked by any client that can make HTTP requests.
+- Server Actions can be defined as inline functions or module exports, and can be used in both Server and Client Components. API routes can only be defined as module exports, and can only be used in Client Components or external clients.
+- Server Actions can access the server environment, such as databases, files, or APIs, without exposing them to the client. API routes can also access the server environment, but they need to handle authentication and authorization to prevent unauthorized access.
+- Server Actions can integrate with the Next.js caching and revalidation system, and can trigger a UI update when they are invoked. API routes can also use caching headers, but they cannot update the UI directly, and need to use a
