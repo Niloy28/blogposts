@@ -1,0 +1,105 @@
+---
+title: "React Suspense"
+date: "2023-12-30"
+tags: ["react", "suspense", "lazy-loading"]
+---
+
+React Suspense is a feature that allows you to create a better user experience by displaying a fallback UI while some components are loading asynchronously. In this article, we will explore how to use React Suspense in your projects, and see some examples of how it can improve the performance and interactivity of your web applications.
+
+## What is React Suspense?
+
+React Suspense is a React component that lets you specify a fallback UI to show while some components are waiting for data or code to be fetched. For example, you can use React Suspense to show a loading spinner while a component is fetching data from an API, or a skeleton UI while a component is loading its code dynamically.
+
+React Suspense works by suspending the rendering of a component tree until a condition is met, such as the data or code being ready. This allows you to avoid showing incomplete or inconsistent UI to the user, and instead show a coherent and smooth transition from the fallback UI to the actual UI.
+
+React Suspense also integrates with the React Concurrent Mode, which is an experimental feature that enables React to render multiple components at the same time, and prioritize the ones that are more important or urgent. This can improve the responsiveness and interactivity of your web applications, especially on slow devices or networks.
+
+## How to use React Suspense in your projects?
+
+To use React Suspense in your projects, you need to follow these steps:
+
+1.  Enable the React Concurrent Mode in your application. You can do this by using the `createRoot` or `createSyncRoot` APIs from `react-dom`, instead of the `render` API. For example:
+
+```js
+import { createRoot } from "react-dom";
+import App from "./App";
+
+const root = document.getElementById("root");
+createRoot(root).render(<App />);
+```
+
+1.  Wrap the components that need to load data or code asynchronously with the `Suspense` component from `react`. You also need to provide a `fallback` prop, which is the UI to show while the components are loading. For example:
+
+```js
+import { Suspense } from "react";
+import Profile from "./Profile";
+
+function App() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<Profile />
+		</Suspense>
+	);
+}
+```
+
+1.  Use the `lazy` function from `react` to load components dynamically, or use custom hooks to fetch data asynchronously. You also need to use the `throw` keyword to suspend the rendering of the component until the data or code is ready. For example:
+
+```js
+import { lazy } from "react";
+
+// Load the ProfileDetails component dynamically
+const ProfileDetails = lazy(() => import("./ProfileDetails"));
+
+function Profile() {
+	return (
+		<div>
+			<h1>Profile</h1>
+			<Suspense fallback={<div>Loading details...</div>}>
+				<ProfileDetails />
+			</Suspense>
+		</div>
+	);
+}
+
+// Fetch the user data asynchronously
+function useUser(id) {
+	const [user, setUser] = useState(null);
+	useEffect(() => {
+		fetch(`/api/users/${id}`)
+			.then((response) => response.json())
+			.then((data) => setUser(data));
+	}, [id]);
+	// Suspend the rendering until the user data is ready
+	if (user === null) {
+		throw new Promise((resolve) => {});
+	}
+	return user;
+}
+
+function ProfileDetails() {
+	const user = useUser(1);
+	return (
+		<div>
+			<p>Name: {user.name}</p>
+			<p>Email: {user.email}</p>
+		</div>
+	);
+}
+```
+
+## What are the benefits of using React Suspense?
+
+Using React Suspense can bring several benefits to your web applications, such as:
+
+- Improved performance: By loading components and data lazily, you can reduce the initial bundle size and improve the loading time of your web pages. You can also use the `maxDuration` prop of the `Suspense` component to specify a maximum time to wait before showing the fallback UI, which can prevent the user from seeing a blank screen for too long.
+- Improved user experience: By showing a fallback UI while the components are loading, you can avoid showing incomplete or inconsistent UI to the user, and instead show a smooth and coherent transition from the fallback UI to the actual UI. You can also use the `useTransition` hook from `react` to control the state of the transition, and show a loading indicator or a confirmation message to the user.
+- Simplified code: By using React Suspense, you can avoid using complex state management or conditional rendering logic to handle loading states, and instead rely on the built-in mechanism of React to suspend and resume the rendering of the component tree. You can also use the `ErrorBoundary` component from `react` to catch and handle any errors that may occur during the loading process.
+
+Also take a look at this great video!
+
+<Video videoID="1_dLaSjzOMY" />
+
+## Conclusion
+
+React Suspense is a powerful feature that allows you to create a better user experience by displaying a fallback UI while some components are loading asynchronously. It can also improve the performance and interactivity of your web applications, especially when used with the React Concurrent Mode. To use React Suspense in your projects, you need to enable the React Concurrent Mode, wrap the components that need to load data or code asynchronously with the `Suspense` component, and use the `lazy` function or custom hooks to fetch data or code asynchronously. You can also use the `maxDuration`, `useTransition`, and `ErrorBoundary` features to customize the behavior and appearance of the fallback UI and the transition.
